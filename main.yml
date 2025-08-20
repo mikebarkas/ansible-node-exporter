@@ -1,0 +1,65 @@
+---
+- name: Install Node Exporter
+  hosts: all
+  remote_user: username
+  become: true
+
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Install tar
+      ansible.builtin.dnf:
+        name: tar
+        state: present
+
+    - name: Create user for node-exporter
+      ansible.builtin.user:
+        name: "{{ node_exporter_user }}"
+        state: present
+        create_home: no
+        shell: /usr/sbin/nologin
+      become: true
+
+    - name: Download node-exporter
+      ansible.builtin.unnarchive:
+        src: "{{ node_exporter_download_url }}"
+        dest: /tmp
+        owner: "{{ node_exporter_user }}"
+        group: "{{ node_exporter_user }}"
+        remote_src: yes
+        creates: "{{ node_exporter_download_dir }}"
+
+    - name: Copying the service binary for node-exporter
+      ansible.builtin.copy:
+        src: "{{ node_exporter_download_dir }}/"
+        dest: /usr/local/bin/
+        owner: "{{ node_exporter_user }}"
+        group: "{{ node_exporter_user }}"
+        remote_src: yes
+        mode: '0775'
+      with_items:
+        - node_exporter
+
+    - name: Removing the tar file of node-exporter
+      file:
+        path: "{{ node_exporter_download_dir }}"
+        state: absent
+
+    - name: Create node-exporter systemd service file
+      tags:
+        - systemd-service
+      template:
+        src: templates/node-exporter.service.j2
+        dest: "{{ service_dest_dir }}/node-exporter.service"
+      changed_when: true
+      notify:
+        - restart node-exporter
+
+  handlers:
+    - name: restart node-exporter
+      ansible.builtin.systemd_service:
+        name: node-exporter
+        state: started
+        daemon_reload: true
+        enabled: true
