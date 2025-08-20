@@ -1,0 +1,5 @@
+node_exporter_user: node_exporter
+service_dest_dir: /etc/systemd/system
+node_exporter_download_dir: /tmp/node_exporter-1.9.1.linux-arm64
+node_exporter_download_url: https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.9.1.linux-arm64.tar.gz
+# node_exporter_download_url: https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.9.1.linux-amd64.tar.gz
